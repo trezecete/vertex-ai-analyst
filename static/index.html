@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery AI Analyst | Vertex AI</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Mermaid.js for Diagrams -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+    </script>
+    <style>
+        :root {
+            --primary: #4285f4;
+            --secondary: #34a853;
+            --accent: #fbbc04;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(66, 133, 244, 0.15) 0, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(52, 168, 83, 0.1) 0, transparent 50%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(66, 133, 244, 0.2);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        button {
+            width: 100%;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(66, 133, 244, 0.4);
+            filter: brightness(1.1);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #result-section {
+            display: none;
+        }
+
+        .report-content {
+            line-height: 1.7;
+            font-size: 1.05rem;
+            color: #d1d5db;
+        }
+
+        .report-content h1,
+        .report-content h2,
+        .report-content h3 {
+            color: #fff;
+            margin: 1.5rem 0 1rem;
+        }
+
+        .report-content code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            color: var(--accent);
+        }
+
+        .error-toast {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            padding: 1rem;
+            border-radius: 12px;
+            color: #fca5a5;
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        footer {
+            margin-top: 4rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full-width {
+                grid-column: span 1;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>BigQuery AI Analyst</h1>
+            <p class="subtitle">Interprete dados e sugira mesclagens com Gemini 2.5 Flash</p>
+        </header>
+
+        <div id="error-message" class="error-toast"></div>
+
+        <div class="card">
+            <div class="form-grid">
+                <div class="input-group">
+                    <label for="project_id">Project ID</label>
+                    <input type="text" id="project_id" placeholder="Ex: ipnet-bi-dev">
+                </div>
+                <div class="input-group">
+                    <label for="location">Location</label>
+                    <input type="text" id="location" placeholder="Ex: us-central1" value="us-central1">
+                </div>
+                <div class="input-group full-width">
+                    <label for="dataset_id">Dataset ID</label>
+                    <input type="text" id="dataset_id" placeholder="Ex: uber_data">
+                </div>
+                <div class="input-group full-width">
+                    <label for="sa_path">Service Account Key Path (PDF)</label>
+                    <input type="text" id="sa_path" placeholder="C:\caminho\para\key.json">
+                </div>
+            </div>
+
+            <button id="analyze-btn">
+                <span id="btn-text">Analisar Dataset</span>
+                <div id="loader" class="loader"></div>
+            </button>
+        </div>
+
+        <div id="result-section" class="card">
+            <div id="report-output" class="report-content"></div>
+        </div>
+
+        <footer>
+            Vertex AI & BigQuery Integration &bull; 2026
+        </footer>
+    </div>
+
+    <script>
+        const btn = document.getElementById('analyze-btn');
+        const loader = document.getElementById('loader');
+        const btnText = document.getElementById('btn-text');
+        const errorDiv = document.getElementById('error-message');
+        const resultSection = document.getElementById('result-section');
+        const reportOutput = document.getElementById('report-output');
+
+        btn.addEventListener('click', async () => {
+            const project_id = document.getElementById('project_id').value.trim();
+            const dataset_id = document.getElementById('dataset_id').value.trim();
+            const location = document.getElementById('location').value.trim();
+            const sa_path = document.getElementById('sa_path').value.trim();
+
+            if (!project_id || !dataset_id) {
+                showError('Project ID e Dataset ID são obrigatórios.');
+                return;
+            }
+
+            // UI Reset
+            errorDiv.style.display = 'none';
+            resultSection.style.display = 'none';
+            btn.disabled = true;
+            loader.style.display = 'block';
+            btnText.innerText = 'Processando...';
+
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ project_id, dataset_id, location, sa_path })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Erro desconhecido no servidor.');
+                }
+
+                // Render Markdown
+                reportOutput.innerHTML = marked.parse(data.report);
+
+                // Render Mermaid Diagrams
+                try {
+                    await mermaid.run({
+                        nodes: document.querySelectorAll('.language-mermaid'),
+                    });
+                } catch (mermaidError) {
+                    console.error("Erro ao renderizar diagrama:", mermaidError);
+                    // Se falhar o diagrama, os blocos de código mermaid continuam visíveis como texto, 
+                    // o que é melhor do que quebrar a UI.
+                    const nodes = document.querySelectorAll('.language-mermaid');
+                    nodes.forEach(node => {
+                        node.style.border = "1px dashed #ef4444";
+                        node.innerHTML += "<p style='color:#ef4444;font-size:0.8rem;margin-top:0.5rem'>⚠️ Note: O diagrama teve um problema técnico de renderização, mas o código acima contém os dados.</p>";
+                    });
+                }
+
+                resultSection.style.display = 'block';
+                resultSection.scrollIntoView({ behavior: 'smooth' });
+
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                btn.disabled = false;
+                loader.style.display = 'none';
+                btnText.innerText = 'Analisar Dataset';
+            }
+        });
+
+        function showError(msg) {
+            errorDiv.innerText = msg;
+            errorDiv.style.display = 'block';
+            errorDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+
+</html>
