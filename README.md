@@ -28,5 +28,8 @@ python app.py
 ```
 Acesse `http://127.0.0.1:5000` e informe o caminho da sua chave JSON.
 
+## Documentação Detalhada
+Para um passo a passo completo sobre permissões, instalação e fluxo de uso, consulte o arquivo [walkthrough.md](./walkthrough.md).
+
 ## Segurança
 ⚠️ **IMPORTANTE**: Nunca suba o arquivo `key.json` para o GitHub. Este projeto já inclui um `.gitignore` que protege este arquivo.
