@@ -27,6 +27,7 @@ ENV/
 
 # Secrets
 *.json
+key/
 !requirements.txt
 !package.json
 

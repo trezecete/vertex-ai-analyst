@@ -26,7 +26,9 @@ pip install google-cloud-bigquery-storage db-dtypes flask flask-cors
 ```bash
 python app.py
 ```
-Acesse `http://127.0.0.1:5000` e informe o caminho da sua chave JSON.
+Acesse `http://127.0.0.1:5000`. 
+
+O sistema tentará usar automaticamente o arquivo `key/key.json` se ele existir na pasta do projeto. Caso contrário, você pode carregar uma chave JSON personalizada clicando no botão **"Carregar arquivo JSON de serviço personalizado"**.
 
 ## Documentação Detalhada
 Para um passo a passo completo sobre permissões, instalação e fluxo de uso, consulte o arquivo [walkthrough.md](./walkthrough.md).

@@ -3,6 +3,7 @@ from flask_cors import CORS
 from bq_service import BigQueryService
 from ai_service import AIService
 import os
+import json
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
@@ -11,27 +12,70 @@ CORS(app)
 def index():
     return send_from_directory(app.static_folder, 'index.html')
 
+@app.route('/api/get_inventory', methods=['POST'])
+def get_inventory():
+    data = request.json
+    project_id = data.get('project_id')
+    dataset_id = data.get('dataset_id')
+    sa_info = data.get('sa_info')
+
+    if not project_id or not dataset_id:
+        return jsonify({"error": "Project ID and Dataset ID are required."}), 400
+
+    # New credentials logic
+    creds = None
+    if sa_info:
+        creds = sa_info
+    elif os.path.exists('key/key.json'):
+        creds = 'key/key.json'
+
+    try:
+        bq = BigQueryService(project_id, service_account_info=creds)
+        tables = bq.list_tables(dataset_id)
+        
+        inventory_summary = []
+        for table in tables:
+            # Pegamos apenas metadados básicos primeiro para ser rápido
+            table_ref = bq.client.dataset(dataset_id).table(table.table_id)
+            full_table = bq.client.get_table(table_ref)
+            inventory_summary.append({
+                "table_id": table.table_id,
+                "column_count": len(full_table.schema)
+            })
+
+        return jsonify({"tables": inventory_summary})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/analyze', methods=['POST'])
 def analyze():
     data = request.json
     project_id = data.get('project_id')
     dataset_id = data.get('dataset_id')
     location = data.get('location', 'us-central1')
-    sa_path = data.get('sa_path')
+    sa_info = data.get('sa_info')
 
     if not project_id or not dataset_id:
         return jsonify({"error": "Project ID and Dataset ID are required."}), 400
 
+    # New credentials logic
+    creds = None
+    if sa_info:
+        creds = sa_info
+    elif os.path.exists('key/key.json'):
+        creds = 'key/key.json'
+
     try:
-        # 1. Fetch metadata
-        bq = BigQueryService(project_id, service_account_path=sa_path)
+        # 1. Fetch full metadata
+        bq = BigQueryService(project_id, service_account_info=creds)
         inventory = bq.get_dataset_inventory(dataset_id)
         
         if not inventory:
             return jsonify({"error": "No tables found in the specified dataset."}), 404
 
         # 2. Analyze with AI
-        ai = AIService(project_id, location=location, service_account_path=sa_path)
+        ai = AIService(project_id, location=location, service_account_info=creds)
         analysis_report = ai.analyze_tables(inventory)
 
         return jsonify({

@@ -3,11 +3,14 @@ from vertexai.generative_models import GenerativeModel, Part
 import json
 
 class AIService:
-    def __init__(self, project_id: str, location: str = "us-central1", service_account_path: str = None):
-        if service_account_path:
+    def __init__(self, project_id: str, location: str = "us-central1", service_account_info: any = None):
+        if service_account_info:
             import google.auth
             from google.oauth2 import service_account
-            credentials = service_account.Credentials.from_service_account_file(service_account_path)
+            if isinstance(service_account_info, dict):
+                credentials = service_account.Credentials.from_service_account_info(service_account_info)
+            else:
+                credentials = service_account.Credentials.from_service_account_file(service_account_info)
             vertexai.init(project=project_id, location=location, credentials=credentials)
         else:
             vertexai.init(project=project_id, location=location)

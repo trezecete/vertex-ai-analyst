@@ -151,7 +151,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.7rem;
         }
 
         button:hover {
@@ -169,20 +169,78 @@
             cursor: not-allowed;
         }
 
-        .loader {
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        /* Progress Styles */
+        #progress-section {
             display: none;
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .progress-status {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .table-list {
+            list-style: none;
+            margin-top: 1rem;
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .table-item {
+            background: rgba(15, 23, 42, 0.3);
+            border: 1px solid var(--glass-border);
+            padding: 0.8rem 1.2rem;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
             }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .table-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .column-badge {
+            background: rgba(66, 133, 244, 0.2);
+            color: var(--primary);
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
         }
 
         #result-section {
@@ -262,22 +320,54 @@
                 </div>
                 <div class="input-group">
                     <label for="location">Location</label>
-                    <input type="text" id="location" placeholder="Ex: us-central1" value="us-central1">
+                    <select id="location"
+                        style="width: 100%; padding: 1rem 1.2rem; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--glass-border); border-radius: 12px; color: white; font-size: 1rem;">
+                        <option value="us-central1">us-central1 (Iowa)</option>
+                        <option value="us-south1">us-south1 (Iowa)</option>
+                        <option value="us-east4">us-east4 (N. Virginia)</option>
+                        <option value="southamerica-east1">southamerica-east1 (São Paulo)</option>
+                        <option value="europe-west1">europe-west1 (Belgium)</option>
+                    </select>
                 </div>
                 <div class="input-group full-width">
                     <label for="dataset_id">Dataset ID</label>
                     <input type="text" id="dataset_id" placeholder="Ex: uber_data">
                 </div>
                 <div class="input-group full-width">
-                    <label for="sa_path">Service Account Key Path (PDF)</label>
-                    <input type="text" id="sa_path" placeholder="C:\caminho\para\key.json">
+                    <label>Conta de Serviço (Opcional)</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="file" id="sa_file" accept=".json" style="display: none;">
+                        <button type="button" id="upload-sa-btn"
+                            style="width: auto; padding: 0.8rem 1.2rem; margin-top: 0; background: var(--card-bg); font-size: 0.9rem; flex: 1;">
+                            📁 Carregar arquivo JSON de serviço personalizado
+                        </button>
+                    </div>
+                    <p id="sa-status" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        Padrão: Usa `key/key.json` se existir na pasta raiz.
+                    </p>
                 </div>
             </div>
 
             <button id="analyze-btn">
                 <span id="btn-text">Analisar Dataset</span>
-                <div id="loader" class="loader"></div>
             </button>
+        </div>
+
+        <!-- Progress Section -->
+        <div id="progress-section" class="card">
+            <div class="progress-status">
+                <span id="step-label">Etapa 1/4: Conectando ao BigQuery...</span>
+                <span id="progress-percent">0%</span>
+            </div>
+            <div class="progress-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <div id="table-stats" style="display: none; margin-top: 1rem;">
+                <p style="font-weight: 600; font-size: 1.1rem; color: var(--primary);">Total de tabelas localizadas:
+                    <span id="total-tables">0</span>
+                </p>
+                <div id="table-list" class="table-list"></div>
+            </div>
         </div>
 
         <div id="result-section" class="card">
@@ -291,17 +381,56 @@
 
     <script>
         const btn = document.getElementById('analyze-btn');
-        const loader = document.getElementById('loader');
         const btnText = document.getElementById('btn-text');
         const errorDiv = document.getElementById('error-message');
         const resultSection = document.getElementById('result-section');
         const reportOutput = document.getElementById('report-output');
 
+        const progressSection = document.getElementById('progress-section');
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercent = document.getElementById('progress-percent');
+        const stepLabel = document.getElementById('step-label');
+        const tableStats = document.getElementById('table-stats');
+        const totalTablesSpan = document.getElementById('total-tables');
+        const tableListDiv = document.getElementById('table-list');
+
+        const uploadBtn = document.getElementById('upload-sa-btn');
+        const saFileInput = document.getElementById('sa_file');
+        const saStatus = document.getElementById('sa-status');
+        let uploadedSAData = null;
+
+        uploadBtn.addEventListener('click', () => saFileInput.click());
+
+        saFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    uploadedSAData = JSON.parse(event.target.result);
+                    saStatus.innerText = `✅ Arquivo carregado: ${file.name}`;
+                    saStatus.style.color = 'var(--secondary)';
+                } catch (err) {
+                    showError('Erro ao ler JSON: arquivo inválido.');
+                    uploadedSAData = null;
+                    saStatus.innerText = '❌ Erro no arquivo JSON';
+                    saStatus.style.color = '#ef4444';
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        function updateProgress(percent, label) {
+            progressBar.style.width = percent + '%';
+            progressPercent.innerText = percent + '%';
+            stepLabel.innerText = label;
+        }
+
         btn.addEventListener('click', async () => {
             const project_id = document.getElementById('project_id').value.trim();
             const dataset_id = document.getElementById('dataset_id').value.trim();
-            const location = document.getElementById('location').value.trim();
-            const sa_path = document.getElementById('sa_path').value.trim();
+            const location = document.getElementById('location').value;
 
             if (!project_id || !dataset_id) {
                 showError('Project ID e Dataset ID são obrigatórios.');
@@ -311,22 +440,64 @@
             // UI Reset
             errorDiv.style.display = 'none';
             resultSection.style.display = 'none';
+            progressSection.style.display = 'block';
+            tableStats.style.display = 'none';
+            tableListDiv.innerHTML = '';
             btn.disabled = true;
-            loader.style.display = 'block';
-            btnText.innerText = 'Processando...';
+            btnText.innerText = 'Analisando...';
+
+            updateProgress(10, 'Etapa 1/4: Buscando lista de tabelas...');
 
             try {
+                const requestPayload = {
+                    project_id,
+                    dataset_id,
+                    sa_info: uploadedSAData
+                };
+
+                // ETAPA 1: Fetch basic inventory
+                const invResponse = await fetch('/api/get_inventory', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestPayload)
+                });
+
+                const invData = await invResponse.json();
+                if (!invResponse.ok) throw new Error(invData.error);
+
+                updateProgress(30, 'Etapa 2/4: Metadados básicos recuperados.');
+
+                // Show table stats
+                totalTablesSpan.innerText = invData.tables.length;
+                tableStats.style.display = 'block';
+
+                invData.tables.forEach(table => {
+                    const div = document.createElement('div');
+                    div.className = 'table-item';
+                    div.innerHTML = `<span class="table-name">${table.table_id}</span><span class="column-badge">${table.column_count} colunas</span>`;
+                    tableListDiv.appendChild(div);
+                });
+
+                updateProgress(50, 'Etapa 3/4: Extraindo amostras e esquemas detalhados...');
+
+                // ETAPA 2: Full Analysis (Vertex AI)
                 const response = await fetch('/api/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ project_id, dataset_id, location, sa_path })
+                    body: JSON.stringify({
+                        project_id,
+                        dataset_id,
+                        location,
+                        sa_info: uploadedSAData
+                    })
                 });
 
-                const data = await response.json();
+                updateProgress(80, 'Etapa 4/4: Gerando relatório com Gemini 2.5 Flash...');
 
-                if (!response.ok) {
-                    throw new Error(data.error || 'Erro desconhecido no servidor.');
-                }
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error);
+
+                updateProgress(100, 'Relatório concluído!');
 
                 // Render Markdown
                 reportOutput.innerHTML = marked.parse(data.report);
@@ -338,12 +509,10 @@
                     });
                 } catch (mermaidError) {
                     console.error("Erro ao renderizar diagrama:", mermaidError);
-                    // Se falhar o diagrama, os blocos de código mermaid continuam visíveis como texto, 
-                    // o que é melhor do que quebrar a UI.
                     const nodes = document.querySelectorAll('.language-mermaid');
                     nodes.forEach(node => {
                         node.style.border = "1px dashed #ef4444";
-                        node.innerHTML += "<p style='color:#ef4444;font-size:0.8rem;margin-top:0.5rem'>⚠️ Note: O diagrama teve um problema técnico de renderização, mas o código acima contém os dados.</p>";
+                        node.innerHTML += "<p style='color:#ef4444;font-size:0.8rem;margin-top:0.5rem'>⚠️ Note: Problema na renderização do diagrama, mas os dados estão no código acima.</p>";
                     });
                 }
 
@@ -352,9 +521,9 @@
 
             } catch (err) {
                 showError(err.message);
+                progressSection.style.display = 'none';
             } finally {
                 btn.disabled = false;
-                loader.style.display = 'none';
                 btnText.innerText = 'Analisar Dataset';
             }
         });

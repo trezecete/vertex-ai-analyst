@@ -2,17 +2,22 @@ from google.cloud import bigquery
 import pandas as pd
 
 class BigQueryService:
-    def __init__(self, project_id: str, service_account_path: str = None):
+    def __init__(self, project_id: str, service_account_info: any = None):
         scopes = [
             "https://www.googleapis.com/auth/cloud-platform",
             "https://www.googleapis.com/auth/drive",
             "https://www.googleapis.com/auth/bigquery"
         ]
-        if service_account_path:
+        if service_account_info:
             from google.oauth2 import service_account
-            credentials = service_account.Credentials.from_service_account_file(
-                service_account_path, scopes=scopes
-            )
+            if isinstance(service_account_info, dict):
+                credentials = service_account.Credentials.from_service_account_info(
+                    service_account_info, scopes=scopes
+                )
+            else:
+                credentials = service_account.Credentials.from_service_account_file(
+                    service_account_info, scopes=scopes
+                )
             self.client = bigquery.Client(credentials=credentials, project=project_id)
         else:
             self.client = bigquery.Client(project=project_id)

@@ -16,7 +16,7 @@ def main():
 
     try:
         print(f"\n1. Fetching metadata for dataset: {dataset_id}...")
-        bq = BigQueryService(project_id, service_account_path=sa_path)
+        bq = BigQueryService(project_id, service_account_info=sa_path)
         inventory = bq.get_dataset_inventory(dataset_id)
         
         if not inventory:
@@ -26,7 +26,7 @@ def main():
         print(f"   Found {len(inventory)} tables. Sending to AI for analysis...")
 
         print("\n2. Analyzing data with Vertex AI Gemini...")
-        ai = AIService(project_id, location=location, service_account_path=sa_path)
+        ai = AIService(project_id, location=location, service_account_info=sa_path)
         analysis_report = ai.analyze_tables(inventory)
 
         print("\n=== AI ANALYSIS REPORT ===")
