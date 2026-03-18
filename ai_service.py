@@ -18,23 +18,38 @@ class AIService:
 
     def analyze_tables(self, inventory: list):
         prompt = f"""
-        Você é um consultor de dados sênior e um excelente professor. Sua tarefa é analisar os metadados das tabelas do BigQuery ou abas do Google Sheets abaixo e criar um relatório didático em PORTUGUÊS (Brasil).
-        
-        O público-alvo NÃO são engenheiros de dados, mas sim profissionais de negócios que precisam entender o que os dados representam e como podem ser usados.
+        Você é um consultor de dados sênior e um excelente professor. Sua tarefa é analisar os metadados das tabelas do BigQuery ou abas do Google Sheets fornecidos e criar um relatório de metadados EXTREMAMENTE DIDÁTICO e PROFISSIONAL em PORTUGUÊS (Brasil).
 
-        Para cada tabela, forneça:
-        1. **O que é esta tabela?**: Explique de forma simples o conceito de negócio por trás dela. Evite termos técnicos como 'float64' ou 'string'; use 'valores monetários', 'nomes', 'datas', etc.
-        2. **Dicionário de Colunas**: Liste cada coluna da tabela e explique seu significado para o negócio de forma muito didática. Se houver códigos ou siglas, tente interpretar o que significam com base nos dados.
-        3. **Rótulo Sugerido**: Dê uma categoria amigável (ex: "Vendas", "Cadastro de Clientes").
-        4. **Sugestões de Relacionamento**: Identifique tabelas/abas que podem ser conectadas. 
-           - **Relacionamento Direto (JOIN)**: Use esta categoria para conexões óbvias e técnicas (ex: 'user_id' em ambas as tabelas). Explique qual campo é a chave de ligação.
-           - **Ideia de Conexão**: Use esta categoria para sugestões analíticas ou de negócio que não possuem uma chave técnica direta óbvia, mas que fazem sentido para correlação (ex: "Podemos cruzar os dados de vendas por região com os dados de clima para ver se dias chuvosos afetam as vendas").
-           - **IMPORTANTE**: Deixe bem evidente se a conexão é técnica/direta ou apenas uma ideia de análise.
-        5. **Sugestões de Visualização (Gráficos/Dashboards)**: Com base nos dados, sugira o MÁXIMO de visões gráficas possíveis que agreguem valor ao negócio. 
-           - Explique QUAL gráfico usar (ex: Bar, Line, Pie, Heatmap, Scatter) e POR QUE ele é útil para entender aquela métrica específica.
-           - Sugira KPIs (Indicadores Chave de Desempenho) que poderiam ser criados a partir dessas tabelas.
+        ESTRUTURA DO RELATÓRIO (SIGA RIGOROSAMENTE):
 
-        Metadados:
+        1. **Resumo da Fonte de Dados**: 
+           - Identifique se é um Banco de Dados (BigQuery) ou uma Planilha (Google Sheets).
+           - Forneça uma **descrição da planilha/dataset como um todo**, explicando seu propósito geral no negócio.
+
+        2. **Análise por Aba/Tabela**:
+           Para CADA aba (se for planilha) ou tabela (se for BigQuery), crie uma seção contendo:
+           - **Descrição da Aba/Tabela**: Explique o que esses dados representam especificamente.
+           - **Dicionário de Dados**: Apresente uma tabela ou lista clara com:
+             - Nome da Coluna
+             - Significado para o Negócio (descrição didática)
+             - Exemplo de Dado (baseado na amostra fornecida)
+           - **Relacionamentos Internos**: Identifique como esta aba se relaciona com OUTRAS ABAS DA MESMA PLANILHA (ou outras tabelas do mesmo dataset). Explique qual campo é a chave de ligação.
+
+        3. **Relacionamentos entre Fontes Distintas** (Caso haja mais de uma planilha/dataset):
+           - Faça uma descrição detalhada de como as diferentes planilhas ou datasets se conectam entre si para formar uma visão 360º do negócio.
+
+        4. **Sugestões de Business Intelligence (KPIs e Dashboards)**:
+           - **KPIs Sugeridos**: Com base nos campos identificados, sugira indicadores-chave de desempenho.
+           - **Gráficos e Visualizações**: Sugira o MÁXIMO de visões gráficas possíveis (Barras, Linhas, Pizza, Heatmap, etc.) e explique POR QUE cada uma agrega valor.
+           - **Proposta de Dashboard**: Descreva como seria um dashboard ideal consolidando essas fontes.
+
+        REGRAS DE ESTILO:
+        - Use Markdown elegante.
+        - Use emojis para facilitar a leitura.
+        - O público-alvo são gestores e analistas de negócio, não técnicos. Use linguagem clara e acessível.
+        - Se houver nomes de colunas técnicos ou siglas (ex: 'id_cli', 'vnd_mt'), traduza para o termo de negócio correto (ex: 'Código do Cliente', 'Montante de Venda').
+
+        Metadados e Amostras para Análise:
         {json.dumps(inventory, indent=2, default=str)}
 
         Responda em um estilo Markdown elegante, pronto para ser exibido em uma interface web premium, usando emojis e divisões claras.
