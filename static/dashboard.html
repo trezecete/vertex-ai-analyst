@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Dinâmico - Vertex AI Analyst</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #660099;
+            --secondary: #E6007E;
+            --bg: #fdfdfd;
+            --card-bg: #ffffff;
+            --text: #1a1a1a;
+            --text-muted: #666666;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(102, 0, 153, 0.05) 0, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(230, 0, 126, 0.05) 0, transparent 50%);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 2rem;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(102, 0, 153, 0.1);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 10px 30px -5px rgba(102, 0, 153, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-5px);
+        }
+
+        canvas {
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        .source-tags {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .source-tag {
+            background: rgba(102, 0, 153, 0.05);
+            border: 1px solid rgba(102, 0, 153, 0.2);
+            color: var(--primary);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-header h3 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .info-icon {
+            cursor: help;
+            color: var(--text-muted);
+            position: relative;
+            display: inline-block;
+        }
+
+        .info-icon:hover {
+            color: var(--secondary);
+        }
+
+        .tooltip {
+            visibility: hidden;
+            width: 250px;
+            background-color: var(--primary);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 100;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -125px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85rem;
+            font-weight: normal;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+        }
+
+        .info-icon:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .search-container {
+            max-width: 600px;
+            margin: 0 auto 2rem auto;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 1rem 1.5rem;
+            border-radius: 16px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(102, 0, 153, 0.1);
+        }
+
+        .btn-group {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        button {
+            padding: 0.8rem 1.8rem;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 0, 153, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: #4c0070;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 0, 153, 0.3);
+        }
+
+        .btn-secondary {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: var(--text);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .btn-secondary:hover {
+            background: #f8fafc;
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 id="dashboard-title">Carregando Dashboard...</h1>
+        <p>Visão gerada dinamicamente via IA Gemini</p>
+        <div class="btn-group">
+            <button id="refresh-data-btn" class="btn-primary">🔄 Atualizar Dados da Fonte</button>
+            <button id="download-json-btn" class="btn-secondary">💾 Baixar Configuração (.json)</button>
+        </div>
+        <div id="source-list" class="source-tags">
+            <!-- Tags das tabelas fontes -->
+        </div>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="global-search" class="search-input" placeholder="🔍 Filtrar dados em todos os gráficos...">
+    </div>
+
+    <div id="dashboard-container" class="dashboard-grid">
+        <!-- Gráficos serão inseridos aqui -->
+    </div>
+
+    <script>
+        let config = JSON.parse(localStorage.getItem('dashboardConfig'));
+        const charts = [];
+
+        function renderDashboard() {
+            if (config && config.charts) {
+                document.getElementById('dashboard-title').innerText = config.title || 'Dashboard de Análise';
+                const container = document.getElementById('dashboard-container');
+                container.innerHTML = '';
+                charts.length = 0;
+
+                // Display unique source tables
+                const sources = [...new Set(config.charts.map(c => c.table_id))];
+                const sourceList = document.getElementById('source-list');
+                sourceList.innerHTML = sources.map(s => `<span class="source-tag">📦 ${s}</span>`).join('');
+
+                config.charts.forEach(chartConfig => {
+                    const card = document.createElement('div');
+                    card.className = 'chart-card';
+                    card.innerHTML = `
+                        <div class="chart-header">
+                            <h3>${chartConfig.title}</h3>
+                            <div class="info-icon">
+                                ⓘ
+                                <span class="tooltip">${chartConfig.description || 'Sem descrição.'}</span>
+                            </div>
+                        </div>
+                        <canvas id="${chartConfig.id}"></canvas>
+                    `;
+                    container.appendChild(card);
+                    
+                    // Apply Vivo colors to datasets
+                    if (chartConfig.data.datasets && chartConfig.data.datasets.length > 0) {
+                        const colors = ['#660099', '#E6007E', '#FFB800', '#00DF95', '#1a1a1a'];
+                        chartConfig.data.datasets.forEach((ds, idx) => {
+                            if (chartConfig.type === 'pie' || chartConfig.type === 'doughnut') {
+                                ds.backgroundColor = colors;
+                                ds.borderColor = '#ffffff';
+                            } else {
+                                ds.backgroundColor = colors[idx % colors.length] + '88'; // Add transparency
+                                ds.borderColor = colors[idx % colors.length];
+                                ds.borderWidth = 2;
+                            }
+                        });
+                    }
+
+                    const ctx = document.getElementById(chartConfig.id).getContext('2d');
+                    const chartInstance = new Chart(ctx, {
+                        type: chartConfig.type,
+                        data: JSON.parse(JSON.stringify(chartConfig.data)),
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { labels: { color: '#1a1a1a', font: { family: 'Outfit' } } }
+                            },
+                            scales: chartConfig.type !== 'pie' && chartConfig.type !== 'doughnut' ? {
+                                y: { ticks: { color: '#666666' }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                                x: { ticks: { color: '#666666' }, grid: { display: false } }
+                            } : {}
+                        }
+                    });
+                    charts.push({ 
+                        instance: chartInstance, 
+                        config: chartConfig, 
+                        originalData: JSON.parse(JSON.stringify(chartConfig.data)) 
+                    });
+                });
+            } else {
+                document.getElementById('dashboard-title').innerText = 'Erro ao carregar dashboard';
+            }
+        }
+
+        renderDashboard();
+
+        // Refresh Logic
+        document.getElementById('refresh-data-btn').addEventListener('click', async () => {
+            if (!config.source_info) return alert('Informações de fonte não encontradas neste dashboard.');
+            
+            const btn = document.getElementById('refresh-data-btn');
+            btn.disabled = true;
+            btn.innerText = '⏳ Atualizando...';
+
+            try {
+                const saInfoStr = localStorage.getItem('sa_info');
+                const sa_info = saInfoStr ? JSON.parse(saInfoStr) : null;
+
+                const response = await fetch('/api/refresh_data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        source_info: config.source_info,
+                        sa_info: sa_info
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error);
+
+                // Update charts with new inventory data
+                // Update originalData for filtering
+                charts.forEach(item => {
+                    const tableData = data.inventory.find(inv => inv.table_id === item.config.table_id);
+                    if (tableData && tableData.sample_data) {
+                        const labels = tableData.sample_data.map(row => row[item.config.label_field]);
+                        const values = tableData.sample_data.map(row => row[item.config.value_field]);
+                        
+                        item.originalData.labels = labels;
+                        item.originalData.datasets[0].data = values;
+                        
+                        // Update current chart with search term if any
+                        applySearch();
+                    }
+                });
+                
+                localStorage.setItem('dashboardConfig', JSON.stringify(config));
+                alert('Dados atualizados com sucesso!');
+            } catch (err) {
+                alert('Erro ao atualizar: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '🔄 Atualizar Dados da Fonte';
+            }
+        });
+
+        // Search/Filter Global Logic
+        const searchInput = document.getElementById('global-search');
+        
+        function applySearch() {
+            const term = searchInput.value.toLowerCase();
+            
+            charts.forEach(item => {
+                const labels = item.originalData.labels;
+                const data = item.originalData.datasets[0].data;
+                
+                const filteredLabels = [];
+                const filteredData = [];
+                
+                labels.forEach((label, index) => {
+                    if (String(label).toLowerCase().includes(term)) {
+                        filteredLabels.push(label);
+                        filteredData.push(data[index]);
+                    }
+                });
+                
+                item.instance.data.labels = filteredLabels;
+                item.instance.data.datasets[0].data = filteredData;
+                item.instance.update();
+            });
+        }
+
+        searchInput.addEventListener('input', applySearch);
+
+        document.getElementById('download-json-btn').addEventListener('click', () => {
+            const configToSave = JSON.parse(localStorage.getItem('dashboardConfig'));
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(configToSave, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "dashboard_config.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        });
+    </script>
+</body>
+</html>

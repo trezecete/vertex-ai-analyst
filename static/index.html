@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data AI Analyst | Vertex AI</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Mermaid.js for Diagrams -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+    </script>
+    <style>
+        :root {
+            --primary: #660099;
+            --secondary: #E6007E;
+            --accent: #FFB800;
+            --bg: #fdfdfd;
+            --card-bg: #ffffff;
+            --text: #1a1a1a;
+            --text-muted: #666666;
+            --glass-border: rgba(102, 0, 153, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(102, 0, 153, 0.05) 0, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(230, 0, 126, 0.05) 0, transparent 50%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 30px -5px rgba(102, 0, 153, 0.1);
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .tab-btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            background: #f8fafc;
+            color: var(--text);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(102, 0, 153, 0.1);
+            background: #ffffff;
+        }
+
+        button.main-btn {
+            width: 100%;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, var(--primary) 0%, #4c0070 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.7rem;
+            box-shadow: 0 4px 15px rgba(102, 0, 153, 0.2);
+        }
+
+        button.main-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(102, 0, 153, 0.4);
+            filter: brightness(1.1);
+        }
+
+        button.main-btn:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        /* Progress Styles */
+        #progress-section {
+            display: none;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            margin: 1.5rem 0;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .progress-status {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.8rem;
+        }
+
+        .table-list {
+            list-style: none;
+            margin-top: 1.5rem;
+            display: grid;
+            gap: 0.8rem;
+        }
+
+        .table-item {
+            background: #ffffff;
+            border: 1px solid var(--glass-border);
+            padding: 1rem 1.5rem;
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .table-name {
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .column-badge {
+            background: rgba(102, 0, 153, 0.08);
+            color: var(--primary);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border: 1px solid rgba(102, 0, 153, 0.1);
+        }
+
+        #result-section {
+            display: none;
+        }
+
+        .report-content {
+            line-height: 1.8;
+            font-size: 1.1rem;
+            color: #334155;
+            padding: 1rem;
+        }
+
+        .report-content h1,
+        .report-content h2,
+        .report-content h3 {
+            color: var(--primary);
+            margin: 2rem 0 1rem;
+            font-weight: 700;
+        }
+
+        .report-content p {
+            margin-bottom: 1.2rem;
+        }
+
+        .report-content code {
+            background: #f1f5f9;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            color: var(--secondary);
+            border: 1px solid #e2e8f0;
+        }
+
+        .report-content table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 1.5rem 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .report-content th {
+            background-color: #f8fafc;
+            color: var(--primary);
+            font-weight: 700;
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .report-content td {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.95rem;
+        }
+
+        .report-content tr:last-child td {
+            border-bottom: none;
+        }
+
+        .report-content tr:hover td {
+            background-color: #f1f5f9;
+        }
+
+        .error-toast {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            padding: 1rem;
+            border-radius: 12px;
+            color: #ef4444;
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        footer {
+            margin-top: 4rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        @media (max-width: 640px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full-width {
+                grid-column: span 1;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Data AI Analyst</h1>
+            <p class="subtitle">Interprete BigQuery ou Google Sheets com Gemini 2.5 Flash</p>
+        </header>
+
+        <div id="error-message" class="error-toast"></div>
+
+        <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+            <button id="tab-bq" class="tab-btn active">📦 BigQuery</button>
+            <button id="tab-sheets" class="tab-btn">📄 Google Sheets</button>
+        </div>
+
+        <!-- BigQuery Section -->
+        <div id="bq-section" class="card">
+            <div class="form-grid">
+                <div class="input-group">
+                    <label for="project_id">Project ID</label>
+                    <input type="text" id="project_id" placeholder="Ex: ipnet-bi-dev">
+                </div>
+                <div class="input-group">
+                    <label for="location">Location</label>
+                    <select id="location">
+                        <option value="us-central1">us-central1 (Iowa)</option>
+                        <option value="us-south1">us-south1 (Iowa)</option>
+                        <option value="us-east4">us-east4 (N. Virginia)</option>
+                        <option value="southamerica-east1">southamerica-east1 (São Paulo)</option>
+                        <option value="europe-west1">europe-west1 (Belgium)</option>
+                    </select>
+                </div>
+                <div class="input-group full-width">
+                    <label for="dataset_id">Dataset ID</label>
+                    <input type="text" id="dataset_id" placeholder="Ex: uber_data">
+                </div>
+            </div>
+            <button id="analyze-bq-btn" class="main-btn">
+                <span>Analisar Dataset BigQuery</span>
+            </button>
+        </div>
+
+        <!-- Google Sheets Section -->
+        <div id="sheets-section" class="card" style="display: none;">
+            <div class="input-group">
+                <label for="sheet_urls">Links das Planilhas (um por linha)</label>
+                <textarea id="sheet_urls" placeholder="https://docs.google.com/spreadsheets/d/..."></textarea>
+            </div>
+            <div class="input-group">
+                <label for="sheets_project_id">Project ID (para Vertex AI)</label>
+                <input type="text" id="sheets_project_id" placeholder="Ex: ipnet-bi-dev">
+            </div>
+            <button id="analyze-sheets-btn" class="main-btn">
+                <span>Analisar Planilhas</span>
+            </button>
+        </div>
+
+        <!-- Service Account (Shared) -->
+        <div class="card" style="padding: 1.5rem;">
+            <label>Conta de Serviço (Opcional)</label>
+            <div style="display: flex; gap: 10px; align-items: center; margin-top: 0.5rem; flex-wrap: wrap;">
+                <input type="file" id="sa_file" accept=".json" style="display: none;">
+                <button type="button" id="upload-sa-btn" class="tab-btn" style="flex: 1; white-space: nowrap;">
+                    📁 Carregar JSON de Serviço
+                </button>
+                <input type="file" id="dashboard_file" accept=".json" style="display: none;">
+                <button type="button" id="load-dashboard-btn" class="tab-btn" style="flex: 1; white-space: nowrap; background: rgba(129, 140, 248, 0.2); border-color: #818cf8;">
+                    📊 Abrir Dashboard Salvo (.json)
+                </button>
+            </div>
+            <p id="sa-status" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                Padrão: Usa `key/key.json` se existir na pasta raiz.
+            </p>
+        </div>
+
+        <!-- Progress Section -->
+        <div id="progress-section" class="card">
+            <div class="progress-status">
+                <span id="step-label">Etapa 1/4: Buscando dados...</span>
+                <span id="progress-percent">0%</span>
+            </div>
+            <div class="progress-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <div id="table-stats" style="display: none; margin-top: 1rem;">
+                <p style="font-weight: 600; font-size: 1.1rem; color: var(--primary);">Total de itens localizados:
+                    <span id="total-tables">0</span>
+                </p>
+                <div id="table-list" class="table-list"></div>
+            </div>
+        </div>
+
+        <div id="result-section" class="card">
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-bottom: 1rem;">
+                <button id="create-dashboard-btn" class="tab-btn" style="width: auto; background: var(--primary);">
+                    📊 Criar Dashboard Dinâmico
+                </button>
+                <button id="download-docx-btn" class="tab-btn" style="width: auto; background: var(--secondary);">
+                    📥 Baixar Relatório (.docx)
+                </button>
+            </div>
+            <div id="report-output" class="report-content"></div>
+        </div>
+
+        <footer>
+            Vertex AI, BigQuery & Google Sheets Integration &bull; 2026
+        </footer>
+    </div>
+
+    <script>
+        // UI Elements
+        const tabBq = document.getElementById('tab-bq');
+        const tabSheets = document.getElementById('tab-sheets');
+        const bqSection = document.getElementById('bq-section');
+        const sheetsSection = document.getElementById('sheets-section');
+        
+        const analyzeBqBtn = document.getElementById('analyze-bq-btn');
+        const analyzeSheetsBtn = document.getElementById('analyze-sheets-btn');
+        const errorDiv = document.getElementById('error-message');
+        const resultSection = document.getElementById('result-section');
+        const reportOutput = document.getElementById('report-output');
+        const downloadDocxBtn = document.getElementById('download-docx-btn');
+        const createDashboardBtn = document.getElementById('create-dashboard-btn');
+
+        const progressSection = document.getElementById('progress-section');
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercent = document.getElementById('progress-percent');
+        const stepLabel = document.getElementById('step-label');
+        const tableStats = document.getElementById('table-stats');
+        const totalTablesSpan = document.getElementById('total-tables');
+        const tableListDiv = document.getElementById('table-list');
+
+        const uploadBtn = document.getElementById('upload-sa-btn');
+        const saFileInput = document.getElementById('sa_file');
+        const saStatus = document.getElementById('sa-status');
+        
+        const loadDashboardBtn = document.getElementById('load-dashboard-btn');
+        const dashboardFileInput = document.getElementById('dashboard_file');
+        let uploadedSAData = null;
+        let currentReport = '';
+        let lastPayload = null;
+
+        // Tab Switching
+        tabBq.addEventListener('click', () => {
+            tabBq.classList.add('active');
+            tabSheets.classList.remove('active');
+            bqSection.style.display = 'block';
+            sheetsSection.style.display = 'none';
+        });
+
+        tabSheets.addEventListener('click', () => {
+            tabSheets.classList.add('active');
+            tabBq.classList.remove('active');
+            sheetsSection.style.display = 'block';
+            bqSection.style.display = 'none';
+        });
+
+        uploadBtn.addEventListener('click', () => saFileInput.click());
+
+        saFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    uploadedSAData = JSON.parse(event.target.result);
+                    localStorage.setItem('sa_info', event.target.result);
+                    saStatus.innerText = `✅ Arquivo carregado: ${file.name}`;
+                    saStatus.style.color = 'var(--secondary)';
+                } catch (err) {
+                    showError('Erro ao ler JSON: arquivo inválido.');
+                    uploadedSAData = null;
+                    saStatus.innerText = '❌ Erro no arquivo JSON';
+                    saStatus.style.color = '#ef4444';
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        loadDashboardBtn.addEventListener('click', () => dashboardFileInput.click());
+
+        dashboardFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const config = JSON.parse(event.target.result);
+                    if (!config.charts) throw new Error('JSON inválido para dashboard.');
+                    
+                    localStorage.setItem('dashboardConfig', JSON.stringify(config));
+                    window.open('/static/dashboard.html', '_blank');
+                } catch (err) {
+                    showError('Erro ao carregar dashboard salvo: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        function updateProgress(percent, label) {
+            progressBar.style.width = percent + '%';
+            progressPercent.innerText = percent + '%';
+            stepLabel.innerText = label;
+        }
+
+        async function analyze(type) {
+            let payload = { sa_info: uploadedSAData };
+            let inventoryUrl, analyzeUrl;
+
+            if (type === 'bq') {
+                const project_id = document.getElementById('project_id').value.trim();
+                const dataset_id = document.getElementById('dataset_id').value.trim();
+                const location = document.getElementById('location').value;
+                if (!project_id || !dataset_id) return showError('Project ID e Dataset ID são obrigatórios.');
+                payload = { ...payload, project_id, dataset_id, location };
+                inventoryUrl = '/api/get_inventory';
+                analyzeUrl = '/api/analyze';
+            } else {
+                const urls = document.getElementById('sheet_urls').value.split('\n').map(u => u.trim()).filter(u => u);
+                const project_id = document.getElementById('sheets_project_id').value.trim();
+                if (!urls.length || !project_id) return showError('Links e Project ID são obrigatórios.');
+                payload = { ...payload, urls, project_id };
+                inventoryUrl = '/api/get_sheets_inventory';
+                analyzeUrl = '/api/analyze_sheets';
+            }
+            lastPayload = payload;
+
+            // UI Reset
+            errorDiv.style.display = 'none';
+            resultSection.style.display = 'none';
+            progressSection.style.display = 'block';
+            tableStats.style.display = 'none';
+            tableListDiv.innerHTML = '';
+            analyzeBqBtn.disabled = true;
+            analyzeSheetsBtn.disabled = true;
+
+            updateProgress(10, 'Etapa 1/4: Buscando dados...');
+
+            try {
+                // ETAPA 1: Fetch basic inventory
+                const invResponse = await fetch(inventoryUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const invData = await invResponse.json();
+                if (!invResponse.ok) throw new Error(invData.error);
+
+                updateProgress(30, 'Etapa 2/4: Metadados básicos recuperados.');
+
+                // Show table stats
+                totalTablesSpan.innerText = invData.tables.length;
+                tableStats.style.display = 'block';
+
+                invData.tables.forEach(table => {
+                    const div = document.createElement('div');
+                    div.className = 'table-item';
+                    div.innerHTML = `<span class="table-name">${table.table_id}</span><span class="column-badge">${table.column_count} colunas</span>`;
+                    tableListDiv.appendChild(div);
+                });
+
+                updateProgress(50, 'Etapa 3/4: Extraindo amostras e esquemas detalhados...');
+
+                // ETAPA 2: Full Analysis (Vertex AI)
+                const response = await fetch(analyzeUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                updateProgress(80, 'Etapa 4/4: Gerando relatório com Gemini...');
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error);
+
+                updateProgress(100, 'Relatório concluído!');
+                progressSection.style.display = 'none';
+
+                // Render Markdown with version fallback
+                currentReport = data.report;
+                if (typeof marked.parse === 'function') {
+                    reportOutput.innerHTML = marked.parse(data.report);
+                } else if (typeof marked === 'function') {
+                    reportOutput.innerHTML = marked(data.report);
+                } else {
+                    reportOutput.innerText = data.report;
+                }
+
+                resultSection.style.display = 'block';
+                resultSection.scrollIntoView({ behavior: 'smooth' });
+
+                // Render Mermaid Diagrams
+                try {
+                    await mermaid.run({
+                        nodes: document.querySelectorAll('.language-mermaid'),
+                    });
+                } catch (mermaidError) {
+                    console.error("Erro ao renderizar diagrama:", mermaidError);
+                }
+
+            } catch (err) {
+                showError(err.message);
+                progressSection.style.display = 'none';
+            } finally {
+                analyzeBqBtn.disabled = false;
+                analyzeSheetsBtn.disabled = false;
+            }
+        }
+
+        analyzeBqBtn.addEventListener('click', () => analyze('bq'));
+        analyzeSheetsBtn.addEventListener('click', () => analyze('sheets'));
+
+        createDashboardBtn.addEventListener('click', async () => {
+            if (!lastPayload) return showError('Execute uma análise primeiro.');
+
+            createDashboardBtn.disabled = true;
+            createDashboardBtn.innerText = '⏳ Criando Dashboard...';
+
+            try {
+                const response = await fetch('/api/generate_dashboard', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(lastPayload)
+                });
+
+                const config = await response.json();
+                if (!response.ok) throw new Error(config.error || 'Erro desconhecido');
+
+                localStorage.setItem('dashboardConfig', JSON.stringify(config));
+                window.open('/static/dashboard.html', '_blank');
+            } catch (err) {
+                showError('Erro ao criar dashboard: ' + err.message);
+            } finally {
+                createDashboardBtn.disabled = false;
+                createDashboardBtn.innerText = '📊 Criar Dashboard Dinâmico';
+            }
+        });
+
+        downloadDocxBtn.addEventListener('click', async () => {
+            if (!currentReport) return;
+            
+            downloadDocxBtn.disabled = true;
+            downloadDocxBtn.innerText = '⏳ Gerando...';
+            
+            try {
+                const response = await fetch('/api/export_docx', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ report: currentReport })
+                });
+                
+                if (!response.ok) throw new Error('Erro ao exportar DOCX');
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'relatorio_analise_dados.docx';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                downloadDocxBtn.disabled = false;
+                downloadDocxBtn.innerText = '📥 Baixar Relatório (.docx)';
+            }
+        });
+
+        function showError(msg) {
+            errorDiv.innerText = msg;
+            errorDiv.style.display = 'block';
+            errorDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+
+</html>
